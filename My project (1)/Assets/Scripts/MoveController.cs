@@ -11,6 +11,7 @@ public class MoveController : MonoBehaviour
     [Header("플레이어 이동 및 점프")]
     Rigidbody2D rigid;
     CapsuleCollider2D capcol;
+    BoxCollider2D boxcol;
     Animator anim;
     Vector3 moveDir;
     float virticalVelocity = 0f;//수직으로 떨어지는 힘
@@ -26,6 +27,7 @@ public class MoveController : MonoBehaviour
     bool isJump;
     float verticalVelocity;
 
+    Camera camMain;
     //Unity Editor에서만 사용이 가능하다.
     private void OnDrawGizmos()
     {
@@ -42,16 +44,21 @@ public class MoveController : MonoBehaviour
     private void Awake()
     {
         rigid = GetComponent<Rigidbody2D>();
+        boxcol = GetComponent<BoxCollider2D>();
         anim = GetComponent<Animator>();
+    }
+    private void Start()
+    {
+        camMain = Camera.main;
     }
 
     void Update()
     {
         moving();
+        checkAim();
         checkGrounded();
         jump();
         checkGravity();
-
         doAnim();
     }
 
@@ -59,7 +66,7 @@ public class MoveController : MonoBehaviour
     {
         isGround = false;
 
-        if (verticalVelocity > 0f) 
+        if (verticalVelocity > 0f)
         {
             return;
         }
@@ -69,15 +76,24 @@ public class MoveController : MonoBehaviour
         //Layer int로 대상의 레이어를 구분한다.
         //Layer의 int와 공통적으로 활용하는 int와 다르다
         //Wall Layer, Ground Layer
+        #region 선 하나로 지상판정을 하는 코드
         RaycastHit2D hit =
 
-         Physics2D.Raycast(transform.position, Vector2.down, groundCheckLength, LayerMask.GetMask("Ground"));
+        // Physics2D.Raycast(transform.position, Vector2.down, groundCheckLength, LayerMask.GetMask("Ground"));
+
+        //if (hit)
+        //{
+        //    isGround = true;
+        //}
+        #endregion
+        Physics2D.BoxCast(boxcol.bounds.center, boxcol.bounds.size, 0f, Vector2.down, groundCheckLength, LayerMask.GetMask("Ground"));
 
         if (hit)
         {
             isGround = true;
         }
     }
+
     private void moving()
     {
         moveDir.x = Input.GetAxisRaw("Horizontal") * moveSpeed;//a,L A key -1, d, R A Key 1, 아무것도 입력하지 않으면 0
@@ -86,6 +102,41 @@ public class MoveController : MonoBehaviour
         //물리에 의해서 이동 물리에 의해서 이동될때는 time.deltaTime값을 줄 필요가 없다.
         rigid.velocity = moveDir;//moveDir값의 default값이 0,0,0인데 y의 값이 0이기 때문에 계속해서 초기화됨(물리와 코드가 별도로 동작)
     }
+
+    private void checkAim()
+    {
+        #region 키보드를 통한 방향전환 기능(주석처리됨)
+        //Vector3 scale = transform.localScale;
+        //if (moveDir.x < 0 && scale.x != 1.0f)//왼쪽
+        //{
+        //    scale.x = 1.0f;
+        //    transform.localScale = scale;
+        //    Debug.Log("<color=red>동작</color>");
+        //}
+        //else if (moveDir.x > 0 && scale.x != -1.0f)//오른쪽
+        //{
+        //    scale.x = -1.0f;
+        //    transform.localScale = scale;
+        //    Debug.Log("<color=blue>동작</color>");
+        //}
+        #endregion
+
+        Vector2 mouseWorldPos = camMain.ScreenToWorldPoint(Input.mousePosition);
+        Vector2 playerPos = transform.position;
+        Vector2 fixedPos = mouseWorldPos - playerPos;
+
+        Vector3 playerScale = transform.localScale;
+        if (fixedPos.x > 0 && playerScale.x != -1.0f)
+        {
+            playerScale.x = -1.0f;
+        }
+        else if (fixedPos.x < 0 && playerScale.x != 1.0f)
+        {
+            playerScale.x = 1.0f;
+        }
+            transform.localScale = playerScale;
+    }
+
 
     private void jump()
     {
@@ -105,11 +156,11 @@ public class MoveController : MonoBehaviour
         }
         else if (isGround == true)
         {
-            verticalVelocity =  0;
+            verticalVelocity = 0;
         }
     }
 
-    private void checkGravity() 
+    private void checkGravity()
     {
         if (isGround == false)//공중에 떠있는 상태
         {
@@ -123,13 +174,13 @@ public class MoveController : MonoBehaviour
         else if (isJump == true)
         {
             isJump = false;
-             verticalVelocity = jumpForce;
+            verticalVelocity = jumpForce;
         }
 
         rigid.velocity = new Vector2(rigid.velocity.x, verticalVelocity);
     }
 
-    private void doAnim() 
+    private void doAnim()
     {
         anim.SetInteger("Horizontal", (int)moveDir.x);
         anim.SetBool("isGround", isGround);
