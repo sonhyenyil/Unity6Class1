@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 
+
 public class MoveController : MonoBehaviour
 {
     //(Case by case임) manager, 비동기적으로 호출이 왔을때만 대응
@@ -28,6 +29,13 @@ public class MoveController : MonoBehaviour
     float verticalVelocity;
 
     Camera camMain;
+
+    [Header("벽점프")]
+    [SerializeField] bool touchWall;
+    bool isWallJump;
+    [SerializeField] float wallJumpTime = 0.3f;
+    float wallJumpTimer = 0.0f;//실질적인 벽점프 동작불가 타이머
+
     //Unity Editor에서만 사용이 가능하다.
     private void OnDrawGizmos()
     {
@@ -39,6 +47,43 @@ public class MoveController : MonoBehaviour
         //Debug.DrawLine(); 디버그도 체크용도로 씬 카메라에 선을 그려줄수 있음
         //Gizmos.DrawSphere(); 디버그보다 더 많은 시각효과를 제공(Gizmos.Draw)
         //Handles.DrawWireArc(); Gizmos보다 더 많은 시각효과를 제공한다(Handles.Draw) 단 Unity Editor기능이므로 게임에는 가지고 갈 수 없다.
+    }
+
+    //private void OnTriggerEnter2D(Collider2D collision)
+    //{
+    //    if (collision.gameObject.layer == LayerMask.NameToLayer("Wall"))//상대방의 콜라이더를 가져옴, 누가 실행시킨지는 모름
+    //    {
+    //        touchWall = true;
+    //    }
+    //}
+
+    //private void OnTriggerExit2D(Collider2D collision)
+    //{
+    //    if (collision.gameObject.layer == LayerMask.NameToLayer("Wall"))
+    //    {
+    //        touchWall = false;
+    //    }
+    //}
+    public void TriggerEnter(HitBox.ehitboxType _type, Collider2D _collision)
+    {
+        if (_type == HitBox.ehitboxType.WallCheck)
+        {
+            if (_collision.gameObject.layer == LayerMask.NameToLayer("Wall"))
+            {
+                touchWall = true;
+            }
+        }
+    }
+
+    public void TriggerExit(HitBox.ehitboxType _type, Collider2D _collision) 
+    {
+        if (_type == HitBox.ehitboxType.WallCheck)
+        {
+            if (_collision.gameObject.layer == LayerMask.NameToLayer("Wall"))
+            {
+                touchWall = false;
+            }
+        }
     }
 
     private void Awake()
@@ -145,8 +190,14 @@ public class MoveController : MonoBehaviour
         //    rigid.AddForce(new Vector2(0, jumpForce), ForceMode2D.Impulse);//지긋이 미는힘
         //}
 
-        if (isGround == false)
+        if (isGround == false)//공증에 떠있는 상태라면
         {
+            //벽에 붙어있고, 그리고 벽을향해 플레이어가 방향키를 누르고 있는데 점프키를 눌렀다면
+            if (touchWall == true && moveDir.x != 0f && Input.GetKeyDown(KeyCode.Space)) 
+            {
+                isWallJump = true;
+            }
+
             return;
         }
 
@@ -162,7 +213,18 @@ public class MoveController : MonoBehaviour
 
     private void checkGravity()
     {
-        if (isGround == false)//공중에 떠있는 상태
+        if (isWallJump == true)
+        {
+            isWallJump = false;
+            Vector2 dir = rigid.velocity;
+            dir.x *= -1f;// 반대방향을 입력하게 해줌
+            rigid.velocity = dir;
+
+            verticalVelocity = jumpForce * 0.5f;
+            //일정시간 유저가 입력할수 없어야 벽을 발로찬 x값을 볼 수 있음
+            //입력불가 타이머를 작동시켜야함
+        }
+        else if (isGround == false)//공중에 떠있는 상태
         {
             verticalVelocity += Physics.gravity.y * Time.deltaTime;//-9.81 유니티 자체 중력으로 사용하면 공기저항이 없는이상 계속해서 가속을 하게된다.
 
@@ -176,6 +238,7 @@ public class MoveController : MonoBehaviour
             isJump = false;
             verticalVelocity = jumpForce;
         }
+       
 
         rigid.velocity = new Vector2(rigid.velocity.x, verticalVelocity);
     }
