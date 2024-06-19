@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
+using System;
 
 
 public class MoveController : MonoBehaviour
@@ -35,6 +36,17 @@ public class MoveController : MonoBehaviour
     bool isWallJump;
     [SerializeField] float wallJumpTime = 0.3f;
     float wallJumpTimer = 0.0f;//실질적인 벽점프 동작불가 타이머
+
+
+    [Header("대시")]
+    [SerializeField] private float dashTime = 0.3f;//대시를 하는 시간
+    [SerializeField] private float dashSpeed = 20.0f;//대시의 속도
+    float dashTimer = 0.0f;//대시 시간을 체크하기 위한 타이머
+    [SerializeField] private float dashCoolTime = 5.0f;//대시 쿨타임을 지정
+    float dashCoolTimer = 0.0f;//대시 재사용 시간을 체크하기위한 타이머
+    //대시 이펙트
+
+    //[SerializeField] KeyCode dashKey; 특정 키값을 받아와서 변경하게 하려면 키값을 변수값으로 받아 줄 수 있음
 
     //Unity Editor에서만 사용이 가능하다.
     private void OnDrawGizmos()
@@ -75,7 +87,7 @@ public class MoveController : MonoBehaviour
         }
     }
 
-    public void TriggerExit(HitBox.ehitboxType _type, Collider2D _collision) 
+    public void TriggerExit(HitBox.ehitboxType _type, Collider2D _collision)
     {
         if (_type == HitBox.ehitboxType.WallCheck)
         {
@@ -99,12 +111,76 @@ public class MoveController : MonoBehaviour
 
     void Update()
     {
-        moving();
-        checkAim();
+        checkTimers();
+
         checkGrounded();
+
+        dash();
+
+        moving();
+
+        checkAim();
+
         jump();
+
         checkGravity();
+
         doAnim();
+    }
+
+    private void dash()
+    {
+        if (dashCoolTimer != 0.0f)
+        {
+            return;
+        }
+        if (dashTimer == 0.0f && Input.GetKeyDown(KeyCode.LeftShift) || Input.GetKeyDown(KeyCode.F))
+        {
+            dashTimer = dashTime;
+            dashCoolTimer = dashCoolTime;
+            verticalVelocity = 0.0f;
+            //    if (transform.localScale.x > 0)//왼쪽
+            //    {
+            //        rigid.velocity = new Vector2(-dashSpeed, verticalVelocity);
+            //    }
+            //    else//오른쪽
+            //    {
+            //        rigid.velocity = new Vector2(dashSpeed, verticalVelocity);
+            //    }
+            //
+            //rigid.velocity = transform.localScale.x > 0 ? new Vector2(-dashSpeed, verticalVelocity) : new Vector2(dashSpeed, verticalVelocity); //삼항식으로 체크
+            rigid.velocity = new Vector2(transform.localScale.x > 0 ? -dashSpeed : dashSpeed, 0.0f);
+        }
+    }
+
+    private void checkTimers()
+    {
+        if (wallJumpTimer > 0.0f)
+        {
+            wallJumpTimer -= Time.deltaTime;
+            if (wallJumpTimer < 0.0f)
+            {
+                wallJumpTimer = 0.0f;
+            }
+        }
+
+        if (dashTimer > 0.0f)
+        { 
+            dashTimer -= Time.deltaTime;
+            if(dashTimer < 0.0f) 
+            {
+                dashTimer = 0.0f;
+            }
+        }
+
+        if (dashCoolTimer > 0.0f)
+        { 
+            dashCoolTimer -= Time.deltaTime;
+            if (dashCoolTimer < 0.0f)
+            {
+                dashCoolTimer = 0.0f;
+            }
+        }
     }
 
     private void checkGrounded()
@@ -141,6 +217,10 @@ public class MoveController : MonoBehaviour
 
     private void moving()
     {
+        if (wallJumpTimer > 0.0f || dashTimer > 0.0f)
+        {
+            return;
+        }
         moveDir.x = Input.GetAxisRaw("Horizontal") * moveSpeed;//a,L A key -1, d, R A Key 1, 아무것도 입력하지 않으면 0
         moveDir.y = rigid.velocity.y;
         //슈팅게임을 만들때는 오브젝트를 코드에 대해서 순간이동하게 만들었지만
@@ -179,7 +259,7 @@ public class MoveController : MonoBehaviour
         {
             playerScale.x = 1.0f;
         }
-            transform.localScale = playerScale;
+        transform.localScale = playerScale;
     }
 
 
@@ -193,7 +273,7 @@ public class MoveController : MonoBehaviour
         if (isGround == false)//공증에 떠있는 상태라면
         {
             //벽에 붙어있고, 그리고 벽을향해 플레이어가 방향키를 누르고 있는데 점프키를 눌렀다면
-            if (touchWall == true && moveDir.x != 0f && Input.GetKeyDown(KeyCode.Space)) 
+            if (touchWall == true && moveDir.x != 0f && Input.GetKeyDown(KeyCode.Space))
             {
                 isWallJump = true;
             }
@@ -213,7 +293,11 @@ public class MoveController : MonoBehaviour
 
     private void checkGravity()
     {
-        if (isWallJump == true)
+        if (dashTimer > 0.0f)
+        {
+            return;
+        }
+        else if (isWallJump == true)
         {
             isWallJump = false;
             Vector2 dir = rigid.velocity;
@@ -223,6 +307,7 @@ public class MoveController : MonoBehaviour
             verticalVelocity = jumpForce * 0.5f;
             //일정시간 유저가 입력할수 없어야 벽을 발로찬 x값을 볼 수 있음
             //입력불가 타이머를 작동시켜야함
+            wallJumpTimer = wallJumpTime;
         }
         else if (isGround == false)//공중에 떠있는 상태
         {
@@ -238,7 +323,7 @@ public class MoveController : MonoBehaviour
             isJump = false;
             verticalVelocity = jumpForce;
         }
-       
+
 
         rigid.velocity = new Vector2(rigid.velocity.x, verticalVelocity);
     }
