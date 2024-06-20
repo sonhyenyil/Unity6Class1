@@ -1,8 +1,9 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
-using UnityEditor;
-using System;
+using UnityEngine.UI;
 
 
 public class MoveController : MonoBehaviour
@@ -39,15 +40,25 @@ public class MoveController : MonoBehaviour
 
 
     [Header("대시")]
-    [SerializeField] private float dashTime = 0.3f;//대시를 하는 시간
+    [SerializeField] private float dashTime = 0.3f;//대시를 지속하는 시간
     [SerializeField] private float dashSpeed = 20.0f;//대시의 속도
-    float dashTimer = 0.0f;//대시 시간을 체크하기 위한 타이머
-    [SerializeField] private float dashCoolTime = 5.0f;//대시 쿨타임을 지정
+    float dashTimer = 0.0f;//대시 지속시간을 체크하기 위한 타이머
+    [SerializeField] private float dashCoolTime = 2.0f;//대시 쿨타임을 지정
     float dashCoolTimer = 0.0f;//대시 재사용 시간을 체크하기위한 타이머
+
+    [Header("대시 UI")]
+    [SerializeField] GameObject objDashCoolTime;
+    [SerializeField] Image imgFill;
+    [SerializeField] TMP_Text TextCoolTime;
+
+    [SerializeField] KeyCode dashKey; //특정 키값을 받아와서 변경하게 하려면 키값을 변수값으로 받아 줄 수 있음
     //대시 이펙트
+    TrailRenderer dashEffect;//null
 
-    //[SerializeField] KeyCode dashKey; 특정 키값을 받아와서 변경하게 하려면 키값을 변수값으로 받아 줄 수 있음
-
+    public class cTimer
+    {
+        public float timer;
+    }
     //Unity Editor에서만 사용이 가능하다.
     private void OnDrawGizmos()
     {
@@ -103,6 +114,9 @@ public class MoveController : MonoBehaviour
         rigid = GetComponent<Rigidbody2D>();
         boxcol = GetComponent<BoxCollider2D>();
         anim = GetComponent<Animator>();
+        dashEffect = GetComponent<TrailRenderer>();
+        initUI();
+        dashEffect.enabled = false; //trail Renderer 컴포넌트를 비활성화 시킴
     }
     private void Start()
     {
@@ -126,19 +140,25 @@ public class MoveController : MonoBehaviour
         checkGravity();
 
         doAnim();
+
+       
+    }
+
+    private void initUI()
+    {
+       objDashCoolTime.SetActive(false);
+        imgFill.fillAmount = 0;
+        TextCoolTime.text = "";
     }
 
     private void dash()
     {
-        if (dashCoolTimer != 0.0f)
-        {
-            return;
-        }
-        if (dashTimer == 0.0f && Input.GetKeyDown(KeyCode.LeftShift) || Input.GetKeyDown(KeyCode.F))
+        if (dashTimer == 0.0f && dashCoolTimer == 0.0f && (Input.GetKeyDown(KeyCode.LeftShift) || Input.GetKeyDown(KeyCode.F)))
         {
             dashTimer = dashTime;
             dashCoolTimer = dashCoolTime;
             verticalVelocity = 0.0f;
+            dashEffect.enabled = true;
             //    if (transform.localScale.x > 0)//왼쪽
             //    {
             //        rigid.velocity = new Vector2(-dashSpeed, verticalVelocity);
@@ -163,22 +183,39 @@ public class MoveController : MonoBehaviour
                 wallJumpTimer = 0.0f;
             }
         }
-
         if (dashTimer > 0.0f)
         { 
+
             dashTimer -= Time.deltaTime;
             if(dashTimer < 0.0f) 
             {
                 dashTimer = 0.0f;
+                dashEffect.enabled = false;
+                dashEffect.Clear();
             }
         }
 
         if (dashCoolTimer > 0.0f)
-        { 
+        {
+            if (objDashCoolTime.activeSelf == false)
+            {
+                objDashCoolTime.SetActive(true);
+            }
+
             dashCoolTimer -= Time.deltaTime;
             if (dashCoolTimer < 0.0f)
             {
                 dashCoolTimer = 0.0f;
+                objDashCoolTime.SetActive(false);
+            }
+
+            //dashCoolTime = 2초, 스킬을 쓰면 0, 점점 1이 되어가야함
+
+            imgFill.fillAmount = 1 - (dashCoolTimer / dashCoolTime);//쿨타임 타이머가 감소할수록 빼는수가 점점 줄어들어 최종적으론 1이됨
+            TextCoolTime.text = dashCoolTimer.ToString("F1");
+            if (dashCoolTimer < 1.0f)
+            {
+                TextCoolTime.text = dashCoolTimer.ToString("F2");
             }
         }
     }
