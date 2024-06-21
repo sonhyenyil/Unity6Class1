@@ -5,7 +5,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-
 public class MoveController : MonoBehaviour
 {
     //(Case by case임) manager, 비동기적으로 호출이 왔을때만 대응
@@ -141,12 +140,12 @@ public class MoveController : MonoBehaviour
 
         doAnim();
 
-       
+
     }
 
     private void initUI()
     {
-       objDashCoolTime.SetActive(false);
+        objDashCoolTime.SetActive(false);
         imgFill.fillAmount = 0;
         TextCoolTime.text = "";
     }
@@ -183,15 +182,16 @@ public class MoveController : MonoBehaviour
                 wallJumpTimer = 0.0f;
             }
         }
-        if (dashTimer > 0.0f)
-        { 
 
+        if (dashTimer > 0.0f)
+        {
             dashTimer -= Time.deltaTime;
-            if(dashTimer < 0.0f) 
+            if (dashTimer < 0.0f)
             {
                 dashTimer = 0.0f;
                 dashEffect.enabled = false;
                 dashEffect.Clear();
+                
             }
         }
 
@@ -213,9 +213,9 @@ public class MoveController : MonoBehaviour
 
             imgFill.fillAmount = 1 - (dashCoolTimer / dashCoolTime);//쿨타임 타이머가 감소할수록 빼는수가 점점 줄어들어 최종적으론 1이됨
             TextCoolTime.text = dashCoolTimer.ToString("F1");
-            if (dashCoolTimer < 1.0f)
+            if (dashCoolTimer < 0.8f)
             {
-                TextCoolTime.text = dashCoolTimer.ToString("F2");
+                TextCoolTime.text = dashCoolTimer.ToString("F2");// 쿨타임이 0.8초 이하로 남게되면 소숫점 2번째 자리까지 쿨타임을 표시해줌
             }
         }
     }
