@@ -5,11 +5,13 @@ using UnityEngine;
 
 public class AttackController : MonoBehaviour
 {
+    Camera mainCam;
     private Vector2 mouseWPCheckVal; //마우스값 위치를 표시하기 위한 저장Vector값
     [SerializeField] Transform trsHand;
     [SerializeField] GameObject objThrowWeapons;
     [SerializeField] Transform trsWeapons;
-    Camera mainCam;
+    [SerializeField] Transform TrsDynamic;
+    [SerializeField] Vector2 throwForce = new Vector2(10f, 0f);
 
     private void Start()
     {
@@ -21,6 +23,7 @@ public class AttackController : MonoBehaviour
     void Update()
     {
         checkAim();
+        checkCreate();
     }
 
     private void checkAim()
@@ -39,7 +42,7 @@ public class AttackController : MonoBehaviour
 
     private void checkCreate() 
     {
-        if (Input.GetKeyDown(KeyCode.Mouse1))
+        if (Input.GetKeyDown(KeyCode.Mouse0))
         {
             createWeapons();
         }
@@ -47,6 +50,14 @@ public class AttackController : MonoBehaviour
 
     private void createWeapons()
     {
-       // GameObject go = Instantiate(objThrowWeapons, );
+       GameObject go = Instantiate(objThrowWeapons, trsWeapons.position, trsWeapons.rotation, TrsDynamic);
+        ThrowWeapon goSc = go.GetComponent<ThrowWeapon>();
+        bool isRight = transform.localScale.x < 0 ? true : false;
+        Vector2 fixedThrowForce = throwForce;
+        if (isRight == false)
+        {
+            fixedThrowForce = -throwForce;
+        }
+        goSc.SetForce(trsWeapons.rotation * fixedThrowForce, isRight);
     }
 }
