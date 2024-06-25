@@ -8,25 +8,25 @@ public class Monster : MonoBehaviour
     Vector2 moveDir = new Vector2(1f, 0f);
     [SerializeField] float moveSpeed;
     BoxCollider2D checkGroundCol;
-    int GroundCheckCount = 0;
+    CapsuleCollider2D checkflyCol;
 
     private void Awake()
     {
         rigid = GetComponent<Rigidbody2D>();
 
         checkGroundCol = GetComponentInChildren<BoxCollider2D>();
+        checkflyCol = GetComponent<CapsuleCollider2D>();
     }
 
-    void Start()
-    {
-        
-    }
-
-    
     void Update()
     {
-        
-        if (checkGroundCol.IsTouchingLayers(LayerMask.GetMask("Ground")) == false)
+
+        if (checkflyCol.IsTouchingLayers(LayerMask.GetMask("Ground")) == false)
+        {
+            rigid.velocity = new Vector2(0, rigid.velocity.y);
+            return;
+        }
+        if (checkGroundCol.IsTouchingLayers(LayerMask.GetMask("Ground")) == false || checkGroundCol.IsTouchingLayers(LayerMask.GetMask("Wall")))
         {
             Vector3 scale = transform.localScale;
             scale.x *= -1;

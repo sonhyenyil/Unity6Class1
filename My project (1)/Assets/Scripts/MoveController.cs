@@ -37,7 +37,6 @@ public class MoveController : MonoBehaviour
     [SerializeField] float wallJumpTime = 0.3f;
     float wallJumpTimer = 0.0f;//실질적인 벽점프 동작불가 타이머
 
-
     [Header("대시")]
     [SerializeField] private float dashTime = 0.3f;//대시를 지속하는 시간
     [SerializeField] private float dashSpeed = 20.0f;//대시의 속도
@@ -360,7 +359,6 @@ public class MoveController : MonoBehaviour
             isJump = false;
             verticalVelocity = jumpForce;
         }
-
 
         rigid.velocity = new Vector2(rigid.velocity.x, verticalVelocity);
     }
