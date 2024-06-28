@@ -31,6 +31,9 @@ public class MoveController : MonoBehaviour
 
     Camera camMain;
 
+    [Header("더블점프")]
+    int doubleJumpCount = 1;
+
     [Header("벽점프")]
     [SerializeField] bool touchWall;
     bool isWallJump;
@@ -248,6 +251,7 @@ public class MoveController : MonoBehaviour
         if (hit)
         {
             isGround = true;
+            doubleJumpCount = 1;
         }
     }
 
@@ -308,6 +312,11 @@ public class MoveController : MonoBehaviour
 
         if (isGround == false)//공증에 떠있는 상태라면
         {
+            if (doubleJumpCount > 0 && Input.GetKeyDown(KeyCode.Space))
+            {
+                --doubleJumpCount;
+                verticalVelocity = jumpForce;
+            }
             //벽에 붙어있고, 그리고 벽을향해 플레이어가 방향키를 누르고 있는데 점프키를 눌렀다면
             if (touchWall == true && moveDir.x != 0f && Input.GetKeyDown(KeyCode.Space))
             {

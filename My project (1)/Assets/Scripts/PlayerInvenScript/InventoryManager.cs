@@ -8,6 +8,8 @@ public class InventoryManager : MonoBehaviour
 
     [SerializeField] GameObject viewInventory;//인벤토리 뷰
     [SerializeField] GameObject fabItem;//인벤토리에 생성될 프리펩
+    [SerializeField] Transform canvasInventory;//인벤토리 캔버스를 불러주기위한 변수
+    public Transform CanvasInventory => canvasInventory;//캔버스 인벤토리 변수를 불러주면 특정 캔버스를 지정해서 불러옴
 
     List<Transform> listTrsInventory = new List<Transform>();
     private void Awake()
@@ -71,5 +73,20 @@ public class InventoryManager : MonoBehaviour
             }
         }
         return -1; //-1은 존재할수 없기에 -1이 리턴시 비어있는 슬롯이 없다는 의미
+    }
+
+    public bool GetItem(string _idx)
+    {
+        int slotNum = getEmptyItemSlot();
+        if (slotNum == -1)
+        {
+            return false;
+        }
+
+        GameObject go = Instantiate(fabItem, listTrsInventory[slotNum]);
+        //오브젝트에게 _idx정보 데이터를 전당하면 매니저가 할 행동은 마무리됨
+        return true;
+
+        
     }
 }

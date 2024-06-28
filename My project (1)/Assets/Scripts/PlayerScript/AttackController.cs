@@ -46,6 +46,7 @@ public class AttackController : MonoBehaviour
         {
             createWeapons();
         }
+        
     }
 
     private void createWeapons()
